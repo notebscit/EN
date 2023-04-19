@@ -1,0 +1,121 @@
+
+Step 1:Configure loopback addresses
+Router 1:
+conf t
+int Lo0
+ip address 10.1.1.1 255.255.255.0
+ipv6 address FEC0::1:1/112
+
+Router 2:
+conf t
+Int Lo0
+ip address 10.1.2.1 255.255.255.0
+ipv6 address FEC0::2:1/112
+Router 3:
+en
+conf t
+int Lo0
+ip address 10.1.3.1 255.255.255.0
+ipv6 address FEC0::3:1/112
+
+Step 2: Configure Static IPv6 address
+Router 1:
+int s0/0/0
+ipv6 address FEC0::12:1/112
+clock rate 64000
+bandwidth 64
+no shutdown
+int s0/0/1
+ipv6 address FEC0::13:1/112
+bandwidth 64
+no shutdown
+ping FEC0::12:2
+ping FEC0::13:3
+
+Router 2:
+conf t
+int s0/0/0
+ipv6 address FEC0::12:2/112
+bandwidth 64
+no shutdown
+ping FEC0::12:1
+
+Router 3:
+conf t
+int s0/0/0
+ipv6 address FEC0::13:3/112
+clock rate 64000
+bandwidth 64
+no shutdown
+ping FEC0::13:1
+
+Step 3: Change the link local address on an interface
+Router 1:
+sh ipv6 int s0/0/0
+conf t
+int s0/0/0
+ipv6 address FE80::1 link-local
+sh ipv6 int s0/0/0
+
+Router 2:
+sh ipv6 int s0/0/0
+conf t
+int s0/0/0
+ipv6 address FE80::2 link-local
+sh ipv6 int s0/0/0
+
+Step 4: Configure EUI-64 address
+
+Router 2:
+conf t
+int f0/0
+ipv6 address FEC0:23::/64 eui-64
+no shutdown
+sh ipv6 int f0/0
+sh ipv6 int brief
+
+Router 3:
+conf t
+int f0/0
+ipv6 address FEC0:23::/64 eui-64
+no shutdown
+sh ipv6 int f0/0
+sh ipv6 int brief
+ping FEC0:23::206:2AFF:FEC5:7E01
+(FastEthernet of router 2)
+Step 5: Enable IPv6 routing and cef
+In all router
+en
+conf t
+ipv6 unicast-routing
+ipv6 cef
+
+
+Step 6: Configure OSPF V3
+Router 1
+int Lo0
+ipv6 ospf 1 area 0
+int s0/0/0
+ipv6 ospf 1 area 0
+int s0/0/1
+ipv6 ospf 1 area 0
+
+Router 2:
+int Lo0
+ipv6 ospf 1 area 0
+int s0/0/0
+ipv6 ospf 1 area 0
+int f0/0
+ip ospf 1 area 0
+
+Router 3:
+int Lo0
+ipv6 ospf 1 area 0
+int s0/0/0
+ipv6 ospf 1 area 0
+int f0/0
+ip ospf 1 area 0
+In all router:
+sh ipv6 ospf neighbor
+sh ipv6 route
+sh ipv6 ospf interface

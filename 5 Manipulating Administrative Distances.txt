@@ -1,0 +1,174 @@
+Practical :3B
+Manipulating Administrative Distances
+
+Step 1: Configure router loopback and addresses
+Router 1:
+en
+conf t
+int Lo1
+ip address 172.16.1.1 255.255.255.0
+int Lo101
+ip address 192.168.101.1 255.255.255.0
+int f0/0
+172.16.12.1 255.255.255.0
+ip address 172.16.12.1 255.255.255.0
+no shutdown
+int s0/0/0
+bandwidth 64
+ip address 172.16.13.1 255.255.255.0
+no shutdown
+
+
+Router 2:
+en
+conf t
+int Lo2
+ip address 172.16.2.1 255.255.255.0
+int Lo102
+ip address 192.168.102.1 255.255.255.0
+int f0/0
+ip address 172.16.12.2 255.255.255.0
+no shutdown
+int f0/1
+ip address 172.16.23.2 255.255.255.0
+no shutdown
+
+Router 3:
+en
+conf t
+int Lo3
+ip address 172.16.3.1 255.255.255.0
+int Lo103
+ip address 192.168.103.1 255.255.255.0
+int f0/0
+ip address 172.16.23.3 255.255.255.0
+no shutdown
+int s0/0/0
+bandwidth 63
+bandwidth 64
+ip address 172.16.13.3 255.255.255.0
+clock rate 64000
+no shutdown
+
+Step 2: Configure switch VLAN
+Switch:
+en
+conf t
+vlan 12
+name R1-R2
+exit
+int f0/1
+description to R1 f0/0
+switchport mode access
+switchport access vlan 12
+interface FastEthernet0/2
+switchport access vlan 12
+exit
+interface FastEthernet0/3
+switchport access vlan 23
+exit
+interface FastEthernet0/4
+switchport access vlan 23
+exit
+
+Step 3: Configure RIP
+Router 1:
+en
+conf t
+router rip
+version 2
+no auto-summary
+network 172.16.0.0
+network 192.168.101.0
+
+Router 2:
+en
+conf t
+router rip
+version 2
+no auto-summary
+network 172.16.0.0
+network 192.168.102.0
+
+Router 3:
+en
+conf t
+router rip
+version 2
+no auto-summary
+network 172.16.0.0
+network 192.168.103.0
+
+Show ip route rip command in all router:
+show ip route rip
+
+Show protocol in all router:
+show ip protocols.
+
+Step 4: Configure OSPF
+Router 1:
+conf t
+int Lo1
+ip ospf network point-to-point
+int Lo101
+router ospf 1
+network 172.16.0.0 0.0.255.255 area 0
+network 192.168.101.0 0.0.0.255 area 0
+
+Router 2:
+conf t
+int Lo2
+ip ospf network point-to-point
+int Lo102
+router ospf 1
+network 172.16.0.0 0.0.255.255 area 0
+network 192.168.102.0 0.0.0.255 area 0
+
+Router 3:
+conf t
+int Lo3
+ip ospf network point-to-point
+int Lo103
+router ospf 1
+network 172.16.0.0 0.0.255.255 area 0
+network 192.168.103.0 0.0.0.255 area 0
+
+Show ip osfp neighbor :
+Router 1  2 3:
+show ip ospf neighbor
+Show ip route:
+Router#sh ip route
+
+
+Step 5: Modify the router protocol distance
+Same in all router:
+conf t
+router rip
+distance 100
+
+Show ip route command
+show ip route
+
+
+Show ip protocols
+show ip protocols
+
+
+Step 6: Modify distance based on route source
+Same in all router:
+conf t
+router ospf 1
+distance 85
+show ip route
+show ip protocols
+
+
+Step 7: Modify distance based on access list
+Same in all router
+conf t
+access-list 1 permit 172.06.0.0 0.0.255.255
+router rip
+distance 65 0.0.0.0 255.255.255.255
+show ip route
+show ip protocols
+

@@ -1,0 +1,71 @@
+Step 1: Configure basic switch parameters
+DLS1#
+int range f0/7-12
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+DLS2#
+int range f0/7-12
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+ALS1#
+int range f0/7-12
+switchport mode trunk
+
+ALS2#
+int range f0/7-12
+switchport mode trunk
+
+Step 2: Configure an EtherChannel with Cisco PagP
+ALS1#
+sh int trunk
+int range f0/11-12
+channel-group 1 mode desirable
+int port-channel 1
+switchport mode trunk
+sh etherchannel summary
+
+ALS2#
+int range f0/11-12
+channel-group 1 mode desirable
+int port-channel 1
+switchport mode trunk
+sh etherchannel summary
+ALS1#
+sh int trunk
+sh spanning-tree
+
+Step 3: Configure an 802.3ad LACP Etherchannel
+ALS1#
+int range f0/7-8
+channel-group 2 mode active
+int port-channel 2
+switchport mode trunk
+sh etherchannel summary
+Step 4: Configure a layer 3 etherchannel
+DLS1#
+int range f0/11-12
+no switchport
+channel-group 3 mode desirable
+int port-channel 3
+ip address 10.0.0.1 255.255.255.0
+DLS2#
+int range f0/11-12
+no switchport
+channel-group 3 mode desirable
+int port-channel 3
+ip address 10.0.0.2 255.255.255.0
+DLS1#
+ping 10.0.0.2
+sh etherchannel summary
+
+Step 5:Configure Load balancing
+
+DLS1#
+sh etherchannel load-balance
+
+ALS1#
+port-channel load-balance
+port-channel load-balance src-dst-mac
+sh etherchannel load-balance

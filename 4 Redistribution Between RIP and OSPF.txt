@@ -1,0 +1,251 @@
+Step 1: Configure loopbacks and assign addresses.
+
+R1
+interface Loopback0
+ip address 172.16.1.1 255.255.255.0
+interface Loopback48
+ip address 192.168.48.1 255.255.255.0
+interface Loopback49
+ip address 192.168.49.1 255.255.255.0
+interface Loopback50
+ip address 192.168.50.1 255.255.255.0
+interface Loopback51
+ip address 192.168.51.1 255.255.255.0
+interface Loopback70
+ip address 192.168.70.1 255.255.255.0
+interface Serial0/0/0
+ip address 172.16.12.1 255.255.255.0
+clock rate 64000
+bandwidth 64
+no shutdown
+
+R2
+interface Loopback0
+ip address 172.16.2.1 255.255.255.0
+interface Serial0/0/0
+ip address 172.16.12.2 255.255.255.0
+bandwidth 64
+no shutdown
+interface Serial0/0/1
+ip address 172.16.23.2 255.255.255.0
+clock rate 64000
+bandwidth 64
+no shutdown
+
+R3
+
+interface Loopback0
+ip address 172.16.3.1 255.255.255.0 R3(configif)#
+interface Loopback20
+ip address 192.168.20.1 255.255.255.0
+interface Loopback25
+ip address 192.168.25.1 255.255.255.0
+interface Loopback30
+ip address 192.168.30.1 255.255.255.0
+interface Loopback35
+ip address 192.168.35.1 255.255.255.0
+interface Loopback40
+ip address 192.168.40.1 255.255.255.0
+interface Serial0/0/1
+ip address 172.16.23.3 255.255.255.0
+bandwidth 64
+no shutdown
+
+R1(Optional)
+
+enable secret cisco
+line con 0
+logging synchronous
+exec-timeout 0 0
+line vty 0 4
+password cisco R1(config-line)#
+login
+
+Step 2: Configure RIPv2.
+
+R1
+router rip
+version 2
+no auto-summary
+network 172.16.0.0
+network 192.168.48.0
+network 192.168.49.0
+network 192.168.50.0
+network 192.168.51.0
+network 192.168.70.0
+
+R2
+router rip
+version 2
+no auto-summary
+network 172.16.0.0
+
+R1&R2
+show ip route rip
+show ip rip database
+
+Step 3: Configure passive interfaces in RIP.
+
+R1#
+show ip route rip
+R2#
+show ip protocols
+
+R2
+router rip
+passive-interface serial 0/0/1
+show ip protocols
+
+R1
+show ip route rip
+
+R1
+router rip
+passive-interface loopback 0
+passive-interface loopback 48
+passive-interface loopback 49
+passive-interface loopback 50
+passive-interface loopback 51
+passive-interface loopback 70
+
+
+R2
+router rip
+passive-interface loopback 0
+
+
+R1
+router rip
+passive-interface default
+no passive-interface Serial0/0/0
+
+Step 4: Summarize a supernet with RIP.
+
+R2
+show ip route rip
+
+R1
+interface serial 0/0/0
+ip summary-address rip 192.168.48.0 255.255.252.0
+ip route 192.168.48.0 255.255.252.0 null0
+router rip
+redistribute static
+show ip route
+
+R2#
+show ip route
+
+Step 5: Suppress routes using prefix lists.
+
+R1
+ip prefix-list RIP-OUT permit 192.168.48.0/22
+ip prefix-list RIP-OUT deny 192.168.48.0/22 le 24
+ip prefix-list RIP-OUT permit 0.0.0.0/0 le 32
+router rip
+distribute-list prefix RIP-OUT out serial0/0/0
+
+
+R2#
+show ip route rip
+show ip rip database
+
+Step 6: Configure OSPF.
+
+
+R2
+router ospf 1
+network 172.16.23.0 0.0.0.255 area 0
+R3
+router ospf 1
+network 172.16.0.0 0.0.255.255 area 0
+network 192.168.0.0 0.0.255.255 area 0
+
+
+R3
+interface Loopback0
+ip ospf network point-to-point
+interface Loopback20
+ip ospf network point-to-point
+interface Loopback25
+ip ospf network point-to-point
+interface Loopback30
+ip ospf network point-to-point
+interface Loopback35
+ip ospf network point-to-point
+interface Loopback40
+ip ospf network point-to-point
+
+
+
+R2# R3#
+show ip ospf neighbor
+show ip route ospf
+
+
+
+
+Step 7: Configure passive interfaces in OSPF.
+
+
+R3
+
+passive-interface loopback 0
+router ospf 1
+passive-interface default
+no passive-interface serial 0/0/1
+show ip protocols
+
+
+Step 8: Allow one-way redistribution.
+
+
+R2
+router rip
+redistribute ospf 1 metric 4
+show ip protocols
+R1#
+show ip route rip
+ping 192.168.30.1
+traceroute 192.168.30.1
+
+R2
+router ospf 1
+default-information originate always
+
+R3#
+show ip route ospf
+
+Step 9: Redistribute between two routing protocols.
+
+R2
+router ospf 1
+no default-information originate always
+redistribute rip
+
+R3#
+show ip route ospf
+
+R2
+router ospf 1
+redistribute rip subnets
+
+Step 10: Set a default seed metric.
+
+R2
+router ospf 1
+default-metric 10000
+
+R3#
+show ip route ospf
+
+Step 11: Change the OSPF external network type.
+
+
+R2
+router ospf 1
+redistribute rip subnets metric-type 1
+show ip route ospf
+
+
+
+

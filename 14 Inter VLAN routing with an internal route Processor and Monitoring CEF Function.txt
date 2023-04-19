@@ -1,0 +1,107 @@
+Practical no 9b: Inter VLAN routing with an internal route Processor and Monitoring CEF Function
+
+
+Switch
+en
+conf t
+hostname ALS1
+enable secret cisco
+line vty 0 15
+password cisco
+login
+Switch
+en
+conf t
+hostname ALS2
+enable secret cisco
+line vty 0 15
+password cisco
+login
+Switch
+en
+conf t
+hostname DLS1
+enable secret cisco
+line vty 0 15
+password cisco
+login
+ALS1(config-line)#int vlan 1
+ALS1(config-if)#ip address 172.16.1.101 255.255.255.0
+ALS1(config-if)#no shutdown
+
+ALS2()#
+int vlan 1
+ip address 172.16.1.102 255.255.255.0
+no shutdown
+DLS1()#
+int vlan 1
+ip address 172.16.1.1 255.255.255.0
+no shutdown
+
+ALS1()# ALS2()#
+ip default-gateway 172.16.1.1
+DLS1()#
+int range f0/7-8
+switchport trunk encapsulation dot1q
+switchport mode trunk
+channel-group 1 mode desirable
+int range f0/9-10
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+ALS1()#
+int range f0/11-12
+switchport mode trunk
+channel-group 1 mode desirable
+ex
+int range f0/7-8
+switchport mode trunk
+channel-group 2 mode desirable
+ALS2#
+int range f0/11-12
+switchport mode trunk
+channel-group 1 mode desirable
+ex
+int range f0/9-10
+switchport mode trunk
+channel-group 2 mode desirable
+
+DLS1#
+sh int trunk
+ALS1#
+sh etherchannel summary
+vtp mode client
+ALS2(config)#
+vtp mode client
+vtp status
+
+
+DLS1()#
+vtp domain SWPOD
+vtp version 2
+vlan 100
+name finance
+vlan 200
+name Enginering
+
+ALS1()#
+int range f0/6
+switchport mode access
+switchport access vlan 100
+
+
+ALS2()#
+int range f0/6
+switchport mode access
+switchport access vlan 200
+
+DLS1#
+int vlan 100
+ip add 172.16.100.1 255.255.255.0
+no shut
+int vlan 200
+ip add 172.16.200.1 255.255.255.0
+no shutdown
+ex
+ip routing
+sh ip route

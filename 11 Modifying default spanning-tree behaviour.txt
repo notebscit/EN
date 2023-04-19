@@ -1,0 +1,44 @@
+Step 1: Display default spanning tree information for all switches
+DLS1()#
+int range f0/7-12
+ switchport trunk encapsulation dot1q
+DLS2()#
+int range f0/7-12
+switchport trunk encapsulation dot1q
+ALS1()#
+int range f0/7-12
+switchport mode trunk
+ALS2()#
+int range f0/7-12
+switchport mode trunk
+DLS1#
+sh spanning-tree
+sh int trunk
+
+Step 2: Configure specific switches to be primary and secondary root
+DLS1()#s
+panning-tree vlan 1 root primary
+ALS1()#
+spanning-tree vlan 1 root secondary
+DLS1# ALS1#
+sh run | include span
+DLS1#
+sh spanning-tree
+
+Step 3: Change the root port using the spanning-tree port-priority command
+DLS2# DLS1#
+sh spanning-tree
+DLS1()#
+int f0/12
+spanning-tree vlan 1 port-priority 112
+DLS2# DLS1#
+sh spanning-tree
+ 
+
+Step 4: Change root port using the spanning-tree cost command
+ALS2#
+sh spanning-tree
+int f0/10
+spanning-trree vlan 1 cost 10
+spanning-tree vlan 1 cost 10
+sh spanning-tree

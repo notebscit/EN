@@ -1,0 +1,32 @@
+Step 1: Configure Basic switch parameters
+Switch
+enable
+ configure terminal
+ hostname DLS1
+ in range f0/7-12
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+
+Switch
+enable
+ configure terminal
+ hostname DLS2
+ int range f0/7-12
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+
+ALS1#
+conf t
+ int range f0/7-12
+ switchport mode trunk
+
+ALS2#
+conf t
+ int range f0/7-12
+ switchport mode trunk
+
+Step 2: Display default spanning tree information for all switches
+
+DLS1# DLS2# ALS1# ALS2#
+sh spanning-tree
+

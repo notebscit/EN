@@ -1,0 +1,37 @@
+DLS1()#
+int range f0/7-12
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+DLS2()#
+int range f0/7-12
+switchport trunk encapsulation dot1q
+switchport mode trunk
+ALS1()#
+int range f0/7-12
+switchport mode trunk
+ALS2()#
+int range f0/7-12
+switchport mode trunk
+
+DLS1()#
+vtp mode transparent
+vtp domain CISCO
+vlan 10
+end
+vlan 20
+end
+sh vlan brief
+sh spanning-tree
+spanning-tree vlan 10 priority 4096
+
+DLS2(config)#
+spanning-tree vlan 20 priority 4096
+DLS1#  ALS1# ALS2#
+sh spanning-tree
+
+DLS1(config)#
+spanning-tree mode rapid-pvst
+
+DLS1#
+sh spanning-tree

@@ -1,0 +1,115 @@
+Router(2)#
+hostname ISP
+ int Lo0
+ ip address 200.200.200.1 255.255.255.0
+ int s0/0/0
+ ip address 192.168.1.2 255.255.255.0
+ no shutdown
+ ex
+ ip route 172.16.0.0 255.255.0.0 192.168.1.1
+Router(1)#
+conf t
+ hostname Gateway
+ int s0/0/0
+ ip address 192.168.1.1 255.255.255.0
+ clock rate 64000
+ bandwidth 64
+ no shutdown
+ ex
+ ip route 0.0.0.0 0.0.0.0 192.168.1.2
+Switch
+en
+ conf t
+ hostname ALS1
+ int vlan 1
+ ip address 172.16.1.101 255.255.255.0
+ no shutdown
+ ex
+ ip default-gateway 172.16.1.1
+
+Switchen
+ conf t
+ hostname ALS2
+ int vlan 1
+ ip address 172.16.1.102 255.255.255.0
+ no shutdown
+ ex
+ ip default-gateway 172.16.1.1
+
+ALS1#
+sh vlan
+en
+ conf t
+ int range f0/11-12
+ switchport mode trunk
+ channel-group 1 mode desirable
+end
+
+ALS2
+en
+ conf t
+ int range f0/11-12
+ switchport mode trunk
+ channel-group 1 mode desirable 
+ end
+
+ALS1#
+show etherchannel summary
+
+ALS2#
+conf t
+ALS2#
+vtp mode client
+
+ALS1#
+conf t
+ vtp domain SWLAB
+ vtp version 2
+ sh vtp status
+
+ALS2#
+sh vtp status
+ALS1(config)#
+vlan 100
+ name Payroll
+ vlan 200
+ name Engineering
+ALS2#
+sh vlan brief
+ALS1(config)#
+int f0/6
+ switchport mode access
+ switchport access vlan 100
+ spanning-tree portfast
+
+ALS2(config)#
+int f0/6
+ switchport mode access 
+ switchport access vlan 200
+ spanning-tree portfast
+
+ALS1#
+sh vlan brief 
+ int f0/1
+ switchport mode trunk
+ end
+Gateway(config)#
+int f0/0
+ no shut
+
+ int f0/0.1
+ description management VLAN 1
+ encapsulation dot1q 1 native
+ ip address 172.16.1.1 255.255.255.0
+
+ int f0/0.100
+ description Payroll VLAN 100
+ encapsulation dot1q 100
+ ip address 172.16.100.1 255.255.255.0
+
+ int f0/0.200
+ description Engineering VLAN 200
+ encapsulation dot1q 200
+ ip address 172.16.200.1 255.255.255.0
+ end
+ sh ip int brief

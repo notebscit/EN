@@ -1,0 +1,122 @@
+Step 1: Configure interface Addresses
+Router  1 ISP1
+hostname ISP1
+int Lo0
+ip address 10.1.1.1 255.255.255.0
+int s0/0/0
+ip address 10.0.0.1 255.255.255.252
+clock rate 128000
+no shutdown
+
+Router 2 ITA:
+conf t
+hostname ITA
+int Lo0
+ip address 192.168.0.1 255.255.255.0
+int Lo1
+ip address 192.168.1.1 255.255.255.0
+int s0/0/0
+ip address 10.0.0.2 255.255.255.252
+no shutdown
+int s0/0/1
+no shutdown
+ip address 172.16.0.2 255.255.255.252
+clock rate 128000
+end
+end
+
+Router 3:
+conf t
+hostname ISP2
+int Lo0
+ip address 172.16.1.1 255.255.255.0
+int s0/0/1
+ip address 172.16.0.1 255.255.255.252
+no shutdown
+
+Step 2:Configure BGP
+Router 1:
+en
+conf t
+router bgp 200
+neighbor 10.0.0.2 remote-as 100
+network 10.1.1.0 mask 255.255.255.0
+
+Router 3:
+conf t
+router bgp 300
+neighbor 172.16.0.2 remote-as 100
+network 172.16.1.0 mask 255.255.255.0
+
+Router 2 ITA:
+en
+conf t
+router bgp 100
+neighbor 10.0.0.1 remote-as 200
+neighbor 172.16.0.1 remote-as 300
+network 192.168.0.0
+network 192.168.1.0
+sh ip route
+
+
+Step 3: Verify bgp on the routers
+Same on all router
+sh ip bgp
+
+
+Step 4:Configure primary and backup route using floating static route
+Router 2:
+conf t
+ip route 0.0.0.0 0.0.0.0 10.0.0.1 210
+ip route 0.0.0.0 0.0.0.0 172.16.0.1 220
+sh ip route
+
+
+Router 1:
+conf t
+int Lo100
+ip address 192.168.100.1 255.255.255.0
+
+Router 2 ITA:
+ITA#ping
+Protocol [ip]:
+Target IP address: 192.168.100.1
+Repeat count [5]:
+Datagram size [100]:
+Timeout in seconds [2]:
+Extended commands [n]: y
+Source address or interface: 192.168.1.1
+Type of service [0]:
+Set DF bit in IP header? [no]:
+Validate reply data? [no]:
+Data pattern [0xABCD]:
+Loose, Strict, Record, Timestamp, Verbose[none]:
+Sweep range of sizes [n]:
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.100.1, timeout is 2 seconds:
+Packet sent with a source address of 192.168.1.1
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/3/6 ms
+
+Step 5: Configure primary and backup route using a default network and a                                     static route
+Router 2:
+conf t
+no ip route 0.0.0.0 0.0.0.0 10.0.0.1 210
+no ip route 0.0.0.0 0.0.0.0 172.16.0.1 220
+
+Router 1:
+conf t
+router bgp 200
+network 192.168.100.0
+
+Router 2:
+sh ip route
+conf t
+ip default-network 192.168.100.0
+sh ip route
+conf t
+ip route 0.0.0.0 0.0.0.0 172.16.0.1 220
+sh ip route
+
+
+
